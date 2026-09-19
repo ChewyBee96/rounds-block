@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Rounds">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1B2027">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Rounds Block</title>
+<style>
+:root{
+  --iron:#1B2027; --iron-lift:#242B34; --iron-edge:#333C48;
+  --chalk:#EDE9E2; --chalk-dim:#8D95A0;
+  --oxide:#C4571F; --canvas:#B8A283; --done:#3D4A3A;
+  --display:'Avenir Next Condensed','HelveticaNeue-CondensedBold','Arial Narrow',system-ui,sans-serif;
+  --body:-apple-system,BlinkMacSystemFont,system-ui,'Segoe UI',sans-serif;
+  --data:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--iron);color:var(--chalk);font-family:var(--body);
+ -webkit-font-smoothing:antialiased;padding-bottom:calc(168px + env(safe-area-inset-bottom));
+ overscroll-behavior-y:contain}
+button{font:inherit}
+
+header{position:sticky;top:0;z-index:20;background:rgba(27,32,39,.94);
+ backdrop-filter:saturate(160%) blur(12px);border-bottom:1px solid var(--iron-edge);
+ padding:calc(10px + env(safe-area-inset-top)) 14px 10px}
+.brandrow{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px}
+.brand{font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:.16em;text-transform:uppercase}
+.brand em{color:var(--oxide);font-style:normal}
+.brandl{display:flex;align-items:center;gap:10px}
+.progpill{border:1px solid var(--canvas);background:rgba(184,162,131,.1);color:var(--canvas);border-radius:6px;
+ padding:5px 9px;font-family:var(--display);font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+.editing .rp-rest{outline:1.5px dashed var(--canvas);outline-offset:4px;border-radius:6px;cursor:pointer}
+.weekwrap{display:flex;align-items:center;gap:8px}
+.weeklabel{font-family:var(--data);font-size:10px;letter-spacing:.14em;color:var(--chalk-dim);text-transform:uppercase}
+.wkbtn{width:30px;height:30px;border:1px solid var(--iron-edge);background:var(--iron-lift);
+ color:var(--chalk);border-radius:6px;font-size:17px;line-height:1;font-family:var(--data)}
+.wkbtn:active{background:var(--oxide);border-color:var(--oxide)}
+.wknum{font-family:var(--data);font-size:17px;font-weight:600;min-width:22px;text-align:center;font-variant-numeric:tabular-nums}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.tab{border:1px solid var(--iron-edge);background:var(--iron-lift);color:var(--chalk-dim);
+ border-radius:7px;padding:9px 1px;font-family:var(--display);font-size:11.5px;
+ letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+.tab .n{display:block;font-family:var(--data);font-size:14px;color:var(--chalk);margin-bottom:1px}
+.tab[aria-selected="true"]{background:var(--oxide);border-color:var(--oxide);color:#fff}
+.tab[aria-selected="true"] .n{color:#fff}
+.tab .dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--canvas);
+ vertical-align:middle;margin-left:3px}
+.tab[aria-selected="true"] .dot{background:#fff}
+
+.circuits{display:flex;gap:6px;padding:14px 14px 0}
+.cbtn{flex:1;border:1px solid var(--iron-edge);background:transparent;color:var(--chalk-dim);
+ border-radius:7px;padding:11px 4px;font-family:var(--display);font-size:12px;
+ letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.cbtn[aria-selected="true"]{border-color:var(--canvas);color:var(--canvas);background:rgba(184,162,131,.08)}
+.cbtn .tick{color:var(--canvas);font-size:11px}
+.editbtn{flex:0 0 54px;border:1px solid var(--iron-edge);background:transparent;color:var(--chalk-dim);
+ border-radius:7px;font-family:var(--display);font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+.editbtn[aria-pressed="true"]{border-color:var(--canvas);background:var(--canvas);color:var(--iron)}
+
+.roundpanel{margin:14px;padding:14px;background:var(--iron-lift);border:1px solid var(--iron-edge);border-radius:12px}
+.rp-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:10px}
+.rp-lab{font-family:var(--data);font-size:10px;letter-spacing:.16em;color:var(--chalk-dim);text-transform:uppercase;margin-bottom:3px}
+.rp-count{font-family:var(--display);font-size:38px;font-weight:700;line-height:.9}
+.rp-count span{color:var(--chalk-dim);font-size:20px}
+.rp-rest{text-align:right}
+.rp-rest .v{font-family:var(--data);font-size:20px;font-weight:600;color:var(--canvas)}
+#tally{width:100%;height:34px;display:block}
+.elapsed{margin-top:12px;padding-top:12px;border-top:1px solid var(--iron-edge);
+ display:flex;justify-content:space-between;align-items:center}
+.elapsed .v{font-family:var(--data);font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--chalk)}
+.sealed{margin-top:12px;padding-top:12px;border-top:1px solid var(--iron-edge)}
+.sealed .msg{font-size:13px;color:var(--canvas);font-family:var(--data);letter-spacing:.03em;line-height:1.5}
+
+.stations{padding:0 14px;display:flex;flex-direction:column;gap:7px}
+.st{display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+ background:var(--iron-lift);border:1px solid var(--iron-edge);border-radius:10px;
+ padding:15px 14px;color:var(--chalk);transition:background .12s,border-color .12s,opacity .12s}
+.st .mark{flex:none;width:22px;height:22px;border-radius:5px;border:1.5px solid var(--chalk-dim);position:relative}
+.st .nm{flex:1;font-size:15px;font-weight:500;line-height:1.25}
+.st .kit{display:block;font-size:11.5px;color:var(--chalk-dim);margin-top:2px;font-family:var(--data)}
+.st .rp{flex:none;font-family:var(--display);font-size:23px;font-weight:700;color:var(--canvas)}
+.st .rp small{font-size:11px;color:var(--chalk-dim);display:block;text-align:right;font-family:var(--data);letter-spacing:.05em}
+.st[data-done="1"]{background:var(--done);border-color:#4E5C4A;opacity:.62}
+.st[data-done="1"] .nm{text-decoration:line-through;text-decoration-thickness:1.5px}
+.st[data-done="1"] .mark{background:var(--canvas);border-color:var(--canvas)}
+.st[data-done="1"] .mark::after{content:"";position:absolute;left:7px;top:3px;width:5px;height:10px;
+ border:solid var(--iron);border-width:0 2.5px 2.5px 0;transform:rotate(42deg)}
+.sealedlist .st{opacity:.5}
+.waiting .st{opacity:.42}
+.waiting .st .mark{border-style:dashed}
+.editing .st{border-color:var(--canvas);border-style:dashed;background:rgba(184,162,131,.06);opacity:1}
+.editing .st .mark{display:none}
+.editing .st .nm{text-decoration:none}
+.editing .st .kit{color:var(--canvas)}
+.editnote{margin:12px 14px 0;font-family:var(--data);font-size:10.5px;letter-spacing:.12em;
+ text-transform:uppercase;color:var(--canvas)}
+
+.note{margin:16px 14px 24px;padding:13px 14px;border-left:2px solid var(--oxide);
+ background:var(--iron-lift);border-radius:0 8px 8px 0;font-size:13.5px;line-height:1.5;color:var(--chalk-dim)}
+.note b{color:var(--chalk);font-weight:600}
+.loads{padding:2px 14px 24px}
+.loads h2{font-family:var(--display);font-size:14px;letter-spacing:.14em;text-transform:uppercase;margin:22px 0 9px;color:var(--canvas)}
+.loads h2 .sub{display:block;font-family:var(--body);font-size:11.5px;letter-spacing:0;
+ text-transform:none;color:var(--chalk-dim);font-weight:400;margin-top:4px;line-height:1.45}
+.kitrow{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;text-align:left;
+ padding:14px 0;border:0;border-bottom:1px solid var(--iron-edge);background:none;
+ color:var(--chalk);font-size:14px}
+.kitrow .v{font-family:var(--data);color:var(--canvas);white-space:nowrap;font-weight:600;font-size:15px;text-align:right}
+.kitrow .v em{font-style:normal;display:block;color:var(--chalk-dim);font-size:11px;font-weight:400;margin-top:2px}
+.grouplab{font-family:var(--data);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+ color:var(--chalk-dim);padding:16px 0 2px}
+.logrow{display:flex;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid var(--iron-edge);font-size:14px;align-items:flex-start}
+.logrow .d{color:var(--chalk-dim);font-family:var(--data);font-size:11.5px;display:block;margin-top:3px;line-height:1.5}
+.logrow .t{font-family:var(--data);color:var(--canvas);font-weight:600;text-align:right;white-space:nowrap}
+.logrow .del{display:block;border:1px solid var(--iron-edge);background:transparent;color:var(--chalk-dim);
+ border-radius:6px;padding:8px 11px;font-family:var(--data);font-size:11px;margin-top:7px}
+.small{font-size:12.5px;color:var(--chalk-dim);padding:14px 0;line-height:1.55}
+.ghost{border:1px solid var(--iron-edge);background:transparent;color:var(--chalk-dim);
+ border-radius:8px;padding:14px 15px;font-family:var(--display);font-size:12px;
+ letter-spacing:.11em;text-transform:uppercase;font-weight:600;width:100%;margin-top:14px}
+.ghost.warn{border-color:#5E3A2A;color:#C98D6E}
+.chart{width:100%;height:136px;display:block;margin:4px 0 2px}
+.stat{display:flex;gap:8px;margin:2px 0 6px}
+.stat div{flex:1;background:var(--iron-lift);border:1px solid var(--iron-edge);border-radius:10px;padding:11px 12px}
+.stat .k{font-family:var(--data);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--chalk-dim);line-height:1.4}
+.stat .v{font-family:var(--display);font-size:26px;font-weight:700;color:var(--chalk);line-height:1.1;margin-top:4px}
+
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:30;
+ padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+ background:linear-gradient(to top,rgba(27,32,39,.99) 62%,rgba(27,32,39,0))}
+.go{width:100%;border:none;border-radius:12px;padding:19px;background:var(--oxide);color:#fff;
+ font-family:var(--display);font-size:18px;font-weight:700;letter-spacing:.13em;text-transform:uppercase}
+.go:active{filter:brightness(.86)}
+.go[disabled]{background:var(--iron-lift);color:var(--chalk-dim);border:1px solid var(--iron-edge)}
+.timer{width:100%;border:1px solid var(--canvas);border-radius:12px;padding:13px;
+ background:rgba(184,162,131,.1);color:var(--canvas);display:flex;align-items:center;justify-content:space-between}
+.timer .t{font-family:var(--data);font-size:34px;font-weight:600;font-variant-numeric:tabular-nums}
+.timer .lab{font-family:var(--display);font-size:11px;letter-spacing:.16em;text-transform:uppercase;text-align:left}
+.timer .skip{border:1px solid var(--canvas);background:transparent;color:var(--canvas);border-radius:8px;
+ padding:11px 15px;font-family:var(--display);font-size:12px;letter-spacing:.11em;text-transform:uppercase;font-weight:600}
+
+.scrim{position:fixed;inset:0;background:rgba(10,13,17,.72);z-index:40;backdrop-filter:blur(2px)}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--iron-lift);
+ border-top:1px solid var(--iron-edge);border-radius:16px 16px 0 0;
+ padding:18px 16px calc(18px + env(safe-area-inset-bottom));max-height:88%;overflow:auto}
+.sheet h3{font-family:var(--display);font-size:20px;letter-spacing:.09em;text-transform:uppercase;font-weight:700}
+.sheet .cap{font-size:13.5px;color:var(--chalk-dim);line-height:1.55;margin-top:9px}
+.sheet .cap b{color:var(--chalk);font-weight:600}
+.stepper{display:flex;align-items:center;gap:10px;margin:18px 0 4px}
+.stepper button{flex:0 0 64px;height:64px;border:1px solid var(--iron-edge);background:var(--iron);
+ color:var(--chalk);border-radius:12px;font-size:28px;font-family:var(--data);line-height:1}
+.stepper button:active{background:var(--oxide);border-color:var(--oxide)}
+.stepper .val{flex:1;text-align:center;font-family:var(--display);font-size:42px;font-weight:700;color:var(--canvas);line-height:1}
+.stepper .val u{text-decoration:none;font-size:16px;color:var(--chalk-dim);display:block;
+ font-family:var(--data);letter-spacing:.1em;margin-top:5px;text-transform:uppercase}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.chip{border:1px solid var(--iron-edge);background:var(--iron);color:var(--chalk-dim);border-radius:8px;
+ padding:12px 14px;font-family:var(--data);font-size:13px;min-width:58px}
+.chip[aria-pressed="true"]{border-color:var(--canvas);color:var(--canvas);background:rgba(184,162,131,.12)}
+.sheetbtns{display:flex;gap:8px;margin-top:16px}
+.sheetbtns button{flex:1;border-radius:12px;padding:17px 10px;font-family:var(--display);
+ font-size:14px;letter-spacing:.11em;text-transform:uppercase;font-weight:700;border:1px solid var(--iron-edge);
+ background:transparent;color:var(--chalk-dim)}
+.sheetbtns button.primary{background:var(--oxide);border-color:var(--oxide);color:#fff}
+.sheetbtns button.danger{background:#7A3418;border-color:#7A3418;color:#fff}
+.hidden{display:none!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brandrow">
+    <div class="brandl">
+      <div class="brand">Rounds<em>.</em></div>
+      <button class="progpill hidden" id="progpill" aria-label="Change programme">Build ▾</button>
+    </div>
+    <div class="weekwrap">
+      <span class="weeklabel">Week</span>
+      <button class="wkbtn" id="wkdown" aria-label="Previous week">−</button>
+      <span class="wknum" id="wknum">1</span>
+      <button class="wkbtn" id="wkup" aria-label="Next week">+</button>
+    </div>
+  </div>
+  <div class="tabs" id="tabs" role="tablist"></div>
+</header>
+
+<div class="circuits" id="circuits" role="tablist"></div>
+<div class="editnote hidden" id="editnote">Editing — tap a station for load or reps, tap the rest to change it</div>
+
+<div class="roundpanel" id="roundpanel">
+  <div class="rp-top" id="rptop">
+    <div>
+      <div class="rp-lab">Round</div>
+      <div class="rp-count"><b id="rdone">0</b><span id="rtotal"> / 3</span></div>
+    </div>
+    <div class="rp-rest" id="rprest">
+      <div class="rp-lab" id="restlab">Rest between</div>
+      <div class="v" id="restval">75s</div>
+    </div>
+  </div>
+  <svg id="tally" viewBox="0 0 300 34" preserveAspectRatio="xMinYMid meet" aria-hidden="true"></svg>
+  <div class="elapsed hidden" id="elapsedbox">
+    <div class="rp-lab" style="margin:0" id="elapsedlab">Elapsed</div>
+    <div class="v" id="elapsedval">0:00</div>
+  </div>
+  <div class="sealed hidden" id="sealedbox">
+    <div class="msg" id="sealedmsg">Logged.</div>
+    <button class="ghost warn" id="startagain">Start this circuit again</button>
+  </div>
+</div>
+
+<div class="stations" id="stations"></div>
+<div id="extra"></div>
+
+<div class="bar" id="bar">
+  <button class="go" id="go">Round complete</button>
+  <div class="timer hidden" id="timerbox">
+    <div>
+      <div class="lab">Resting</div>
+      <div class="t" id="tval">1:15</div>
+    </div>
+    <button class="skip" id="skip">Skip</button>
+  </div>
+</div>
+
+<div class="scrim hidden" id="scrim"></div>
+<div class="sheet hidden" id="sheet" role="dialog" aria-modal="true"></div>
+
+<script>
+/* ============================================================
+   MOVEMENTS
+   One entry per implement. The load lives here, not on the
+   station, so changing the sandbag once changes it everywhere
+   the sandbag appears.
+   kind: mace | kb | bag | machine | bw
+   ============================================================ */
+const MOVES={
+ mace360:     {label:"Mace 360",                 kg:8,  kind:"mace"},
+ mace10to2:   {label:"Mace 10-to-2",             kg:8,  kind:"mace"},
+ maceUpper:   {label:"Mace uppercut",            kg:5,  kind:"mace"},
+ maceBarb:    {label:"Mace barbarian squat",     kg:8,  kind:"mace"},
+ kbSwing:     {label:"KB two-hand swing",        kg:24, kind:"kb"},
+ kbSwing1:    {label:"KB single-arm swing",      kg:20, kind:"kb"},
+ kbPress2:    {label:"KB double overhead press", kg:16, pair:true, kind:"kb"},
+ kbPushPress: {label:"KB single-arm push press", kg:24, kind:"kb"},
+ kbFront2:    {label:"KB double front squat",    kg:20, pair:true, kind:"kb"},
+ kbLunge:     {label:"KB rack reverse lunge",    kg:16, pair:true, kind:"kb"},
+ kbSplit:     {label:"Bulgarian split squat",    kg:12, pair:true, kind:"kb"},
+ kbRDL:       {label:"KB single-leg RDL",        kg:24, kind:"kb"},
+ kbClean:     {label:"KB clean & press",         kg:20, kind:"kb"},
+ renegade:    {label:"Renegade row",             kg:16, pair:true, kind:"kb"},
+ farmer:      {label:"Farmer carry",             kg:20, pair:true, kind:"kb"},
+ sandbag:     {label:"Sandbag",                  kg:20, kind:"bag"},
+ chestPress:  {label:"Plate-loaded chest press", kg:0,  kind:"machine"},
+ rowMachine:  {label:"Plate-loaded row",         kg:0,  kind:"machine"},
+ cableCurl:   {label:"Cable curl",               kg:0,  kind:"machine"},
+ pressUp:     {label:"Press-up",                 kg:0,  kind:"bw"},
+ dip:         {label:"Dip",                      kg:0,  kind:"bw"},
+ pullUp:      {label:"Pull-up",                  kg:0,  kind:"bw"},
+ kneeRaise:   {label:"Hanging knee raise",       kg:0,  kind:"bw"},
+ /* --- added for the Build block --- */
+ bandPull:    {label:"Banded pull-up",           band:"Heavy", kind:"band"},
+ bandDip:     {label:"Banded dip",               band:"Heavy", kind:"band"},
+ pullNeg:     {label:"Pull-up negative",         kg:0,  kind:"bw"},
+ dipHold:     {label:"Dip support hold",         kg:0,  kind:"bw"},
+ pushKB:      {label:"Push-up on KB handles",    kg:0,  kind:"bw"},
+ pushDecline: {label:"Decline / archer push-up", kg:0,  kind:"bw"},
+ hollow:      {label:"Hollow hold",              kg:0,  kind:"bw"},
+ bMace360:    {label:"Mace 360 (choked up)",     kg:5,  kind:"mace"},
+ bMace10to2:  {label:"Mace 10-to-2 (choked up)", kg:5,  kind:"mace"},
+ maceGrave:   {label:"Mace gravedigger",         kg:8,  kind:"mace"},
+ kbRDL2:      {label:"Double KB Romanian deadlift", kg:20, pair:true, kind:"kb"},
+ suitcase:    {label:"Suitcase carry",           kg:24, kind:"kb"},
+ gorilla:     {label:"Double KB gorilla row",    kg:16, pair:true, kind:"kb"},
+ goblet:      {label:"Goblet squat",             kg:20, kind:"kb"},
+ slamBall:    {label:"Slam ball",                kg:10, kind:"ball"},
+ facePull:    {label:"Cable face pull",          kg:0,  kind:"machine"},
+ latPull:     {label:"Kneeling cable lat pulldown", kg:0, kind:"machine"},
+ cableFly:    {label:"Cable chest fly",          kg:0,  kind:"machine"},
+ cableLat:    {label:"Cable lateral raise",      kg:0,  kind:"machine"},
+ cableRear:   {label:"Cable rear delt fly",      kg:0,  kind:"machine"}
+};
+const BANDS=["Extra heavy","Heavy","Medium","Light","Extra light","None"];
+
+/* ============================================================
+   BUILD — muscle-building circuits, 6-week block.
+   Each session: Skill (pull-ups, dips, mace, done fresh),
+   Main, Accessory. Session 4 is a 20-minute AMRAP.
+   rng = the rep range to work through; rp = today's target.
+   Week 6 is a deload: one round fewer on every circuit.
+   ============================================================ */
+const BUILD=[
+ {n:1,name:"Press",
+  A:{lab:"Skill",rounds:4,rest:90,
+    note:"<b>Priority work, done fresh.</b> Dips 3 seconds down. Mace choked up. If anything pinches the shoulder, skip that move today and do gravediggers instead.",
+    items:[
+    {mv:"bandDip",    nm:"Banded dip (3s down)",     rp:6,  rng:"6–10"},
+    {mv:"bandPull",   nm:"Banded pull-up",           rp:5,  rng:"5–8"},
+    {mv:"bMace360",   nm:"Mace 360",                 rp:8,  side:"each", sub:"each way"}]},
+  B:{lab:"Main",rounds:4,rest:75,
+    note:"Straight from one station to the next. Every set stops 1–2 reps short of failure.",
+    items:[
+    {mv:"chestPress", nm:"Plate-loaded bench press", rp:10, rng:"10–12"},
+    {mv:"rowMachine", nm:"Seated row",               rp:10, rng:"10–12"},
+    {mv:"pushKB",     nm:"Push-up on KB handles",    rp:12, rng:"max −2"},
+    {mv:"facePull",   nm:"Cable face pull",          rp:15, rng:"15–20"}]},
+  C:{lab:"Accessory",rounds:2,rest:60,items:[
+    {mv:"cableCurl",  nm:"Cable curl",               rp:12, rng:"12–15"},
+    {mv:"kneeRaise",  nm:"Hanging knee raise",       rp:10, rng:"10–15"}]},
+  fin:null},
+
+ {n:2,name:"Legs",
+  A:{lab:"Skill",rounds:3,rest:90,
+    note:"<b>Negatives:</b> jump to the top, lower over 5 seconds. <b>Dip hold:</b> arms locked, shoulders pushed down away from your ears.",
+    items:[
+    {mv:"pullNeg",    nm:"Pull-up negative (5s down)", rp:3, rng:"3"},
+    {mv:"maceGrave",  nm:"Mace gravedigger",         rp:8,  side:"each"},
+    {mv:"dipHold",    nm:"Dip support hold",         rp:20, type:"sec", rng:"20–30s"}]},
+  B:{lab:"Main",rounds:4,rest:75,items:[
+    {mv:"kbFront2",   nm:"Double KB front squat",    rp:8,  rng:"8–12"},
+    {mv:"kbSwing",    nm:"KB swing",                 rp:15},
+    {mv:"kbSplit",    nm:"Bulgarian split squat",    rp:10, side:"each"},
+    {mv:"kneeRaise",  nm:"Hanging knee raise",       rp:10, rng:"10–15"}]},
+  C:{lab:"Accessory",rounds:3,rest:60,items:[
+    {mv:"kbRDL2",     nm:"Double KB Romanian deadlift", rp:12},
+    {mv:"suitcase",   nm:"Suitcase carry",           rp:30, type:"m", sub:"metres each hand"},
+    {mv:"slamBall",   nm:"Slam ball",                rp:10}]},
+  fin:null},
+
+ {n:3,name:"Pull",
+  A:{lab:"Skill",rounds:4,rest:90,
+    note:"<b>Priority work, done fresh.</b> Full hang at the bottom of every pull-up. Mace choked up.",
+    items:[
+    {mv:"bandPull",   nm:"Banded pull-up",           rp:6,  rng:"6–10"},
+    {mv:"bandDip",    nm:"Banded dip",               rp:6,  rng:"6–10"},
+    {mv:"bMace10to2", nm:"Mace 10-to-2",             rp:8,  side:"each"}]},
+  B:{lab:"Main",rounds:4,rest:75,items:[
+    {mv:"latPull",    nm:"Kneeling cable lat pulldown", rp:10, rng:"10–12"},
+    {mv:"pushDecline",nm:"Decline or archer push-up", rp:10, rng:"max −2"},
+    {mv:"gorilla",    nm:"Double KB gorilla row",    rp:10, side:"each"},
+    {mv:"cableFly",   nm:"Cable chest fly",          rp:12, rng:"12–15"}]},
+  C:{lab:"Accessory",rounds:2,rest:60,items:[
+    {mv:"cableLat",   nm:"Cable lateral raise",      rp:15, rng:"15–20"},
+    {mv:"cableRear",  nm:"Cable rear delt fly",      rp:15, rng:"15–20"},
+    {mv:"hollow",     nm:"Hollow hold",              rp:20, type:"sec", rng:"20–30s"}]},
+  fin:null},
+
+ {n:4,name:"AMRAP",
+  A:{lab:"20-min AMRAP",amrap:1200,rest:0,items:[
+    {mv:"bandPull",   nm:"Banded pull-up",           rp:5},
+    {mv:"bandDip",    nm:"Banded dip",               rp:5},
+    {mv:"bMace360",   nm:"Mace 360",                 rp:10, side:"total"},
+    {mv:"kbSwing",    nm:"KB swing",                 rp:10},
+    {mv:"goblet",     nm:"Goblet squat",             rp:10},
+    {mv:"slamBall",   nm:"Slam ball",                rp:10}]},
+  fin:null}
+];
+
+/* type: undefined (reps) | sec | m      side: total | each | undefined */
+const WEEKS={1:[3,3],2:[3,3],3:[4,3],4:[4,3],5:[5,4],6:[5,4],7:[5,4],8:[3,2]};
+const S4=[3,3,4,4,5,5,5,3];
+const KEY="roundsblock.v2";
+const OLDKEY="roundsblock.v1";
+
+/* Each programme keeps its own week, progress, reps and log.
+   The original block keeps an empty key prefix so existing data
+   stays exactly where it was. */
+const PROGS={
+  build: {id:"build", name:"Build",  pre:"build|", weeks:6, sessions:BUILD,
+          desc:"Pull-ups, dips and mace first while you're fresh, then muscle-building circuits. 6-week block; week 6 is a deload."}
+};
+const CKEYS=["A","B","C"];
+let SESSIONS=BUILD;
+
+let state={
+  week:1, sIdx:0, circuit:"A", view:"train", edit:false,
+  kg:{}, pair:{}, reps:{}, band:{}, rest:{}, weekOf:{},
+  prog:{},
+  log:[], kitLog:[]
+};
+function PR(){ return PROGS[state.progId]||PROGS.build; }
+function isBuild(){ return PR().id==="build"; }
+function progOf(e){ return e.prog||"rounds"; }
+let timerId=null,tickId=null,wakeLock=null;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- persistence ---------- */
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){} }
+function load(){
+  try{
+    const raw=localStorage.getItem(KEY);
+    if(raw){
+      const d=JSON.parse(raw);
+      if(d&&typeof d==="object") state=Object.assign(state,d);
+      return;
+    }
+    migrate();
+  }catch(e){}
+}
+function migrate(){
+  const raw=localStorage.getItem(OLDKEY); if(!raw) return;
+  try{
+    const d=JSON.parse(raw);
+    if(typeof d.week==="number"&&d.week>=1&&d.week<=8) state.week=d.week;
+    (d.log||[]).forEach(e=>state.log.push({
+      id:uid(), t:0, date:e.date||"", week:e.week||1, sIdx:3, circuit:"A",
+      rounds:e.rounds||0, secs:mmss(e.time), reps:0, vol:0
+    }));
+    save();
+  }catch(e){}
+}
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function mmss(t){ const p=String(t||"").split(":"); return p.length===2?(+p[0]*60+ +p[1]):0; }
+
+/* ---------- loads and reps ---------- */
+function kgOf(mv){ return state.kg[mv]!=null ? state.kg[mv] : MOVES[mv].kg; }
+function pairOf(mv){ return state.pair[mv]!=null ? state.pair[mv] : !!MOVES[mv].pair; }
+function bandOf(mv){ return state.band[mv]!=null ? state.band[mv] : MOVES[mv].band; }
+function kitLabel(mv){
+  const k=kgOf(mv), p=pairOf(mv), kind=MOVES[mv].kind;
+  if(kind==="band"){ const b=bandOf(mv); return b==="None" ? "strict — no band" : b.toLowerCase()+" band"; }
+  if(kind==="ball") return k+"kg ball";
+  if(kind==="bw") return k>0 ? "bodyweight + "+k+"kg" : "bodyweight";
+  if(kind==="machine") return k>0 ? k+"kg" : "load not set";
+  if(kind==="bag") return k+"kg bag";
+  return p ? "2 × "+k+"kg" : k+"kg";
+}
+function repKey(s,c,i){ return PR().pre+s+":"+c+":"+i; }
+function repOf(s,c,i){
+  const k=repKey(s,c,i);
+  return state.reps[k]!=null ? state.reps[k] : SESSIONS[s][c].items[i].rp;
+}
+function subLabel(it,rp){
+  if(it.sub) return it.sub;
+  if(it.type==="sec") return "seconds";
+  if(it.type==="m") return "metres";
+  if(it.side==="each") return "per side";
+  if(it.side==="total") return rp%2===0 ? (rp/2)+" each side" : "alternating";
+  return "";
+}
+function repTotal(it,rp){ if(it.type) return 0; return it.side==="each" ? rp*2 : rp; }
+function repVol(it,rp,mv){
+  const kind=MOVES[mv].kind;
+  if(kind==="bw"||kind==="band"||it.type) return 0;
+  return repTotal(it,rp)*kgOf(mv)*(pairOf(mv)?2:1);
+}
+
+/* ---------- derived ---------- */
+function current(){ return SESSIONS[state.sIdx][state.circuit]||null; }
+function rounds(){
+  const cir=current();
+  if(isBuild()){
+    if(!cir) return 0;
+    if(cir.amrap) return Infinity;
+    return Math.max(1,cir.rounds-(state.week===6?1:0));
+  }
+  if(state.sIdx===3) return S4[state.week-1];
+  return WEEKS[state.week][state.circuit==="A"?0:1];
+}
+function restKey(){ return PR().pre+state.sIdx+":"+state.circuit; }
+function baseRest(){ const c=current(); if(!c) return 0; const o=state.rest[restKey()]; return o!=null?o:c.rest; }
+function rest(){ const b=baseRest(); return (!isBuild()&&state.week===7)?Math.round(b*0.75):b; }
+function pKey(w,s,c){ return PR().pre+w+":"+s+":"+c; }
+function P(){
+  const k=pKey(state.week,state.sIdx,state.circuit);
+  if(!state.prog[k]) state.prog[k]={done:0,checks:[],startedAt:null,secs:0,logged:false,logId:null};
+  const p=state.prog[k];
+  const cir=current();
+  const n=cir?cir.items.length:0;
+  if(!Array.isArray(p.checks)||p.checks.length!==n) p.checks=new Array(n).fill(false);
+  return p;
+}
+function fmt(s){ s=Math.max(0,Math.floor(s||0)); return Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); }
+function isAmrap(){ const c=current(); return !!(c&&c.amrap); }
+function isFin(p){
+  if(state.circuit==="F") return p.done>=1;
+  if(isAmrap()) return p.secs>0;
+  return p.done>=rounds();
+}
+function whereUsed(mv){
+  const out=[];
+  SESSIONS.forEach(s=>CKEYS.forEach(c=>{
+    if(s[c]&&s[c].items.some(it=>it.mv===mv)) out.push("session "+s.n+(s[c].lab?" "+s[c].lab.toLowerCase():(s.B?" "+c:"")));
+  }));
+  return out;
+}
+function movesInProg(){
+  const out=[];
+  SESSIONS.forEach(s=>CKEYS.forEach(c=>{ if(s[c]) s[c].items.forEach(it=>{ if(!out.includes(it.mv)) out.push(it.mv); }); }));
+  return out;
+}
+function today(){ return new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"short"}); }
+
+/* ---------- sheets ---------- */
+function closeSheet(){ $("sheet").classList.add("hidden"); $("scrim").classList.add("hidden"); }
+function openSheet(html,wire){
+  $("sheet").innerHTML=html;
+  $("sheet").classList.remove("hidden");
+  $("scrim").classList.remove("hidden");
+  $("sheet").scrollTop=0;
+  if(wire) wire();
+}
+function ask(title,body,okLabel,onOk,danger){
+  openSheet(
+    `<h3>${esc(title)}</h3><div class="cap">${body}</div>
+     <div class="sheetbtns">
+       <button id="sk_no">Keep it</button>
+       <button id="sk_yes" class="${danger?"danger":"primary"}">${esc(okLabel)}</button>
+     </div>`,
+    ()=>{ $("sk_no").onclick=closeSheet; $("sk_yes").onclick=()=>{ closeSheet(); onOk(); }; }
+  );
+}
+
+/* ---------- load editor ---------- */
+const PRESETS={ kb:[12,16,20,24,36], mace:[5,8], bag:[20,25,30,35,40], machine:[10,20,30,40,50,60], bw:[0,4,8,12,16], ball:[6,8,10,12,15] };
+const STEPS={ kb:2, mace:1, bag:1, machine:2.5, bw:1, ball:1 };
+function openBand(mv){
+  const M=MOVES[mv];
+  let b=bandOf(mv);
+  const where=whereUsed(mv);
+  const draw=()=>document.querySelectorAll("#bdchips .chip").forEach(x=>x.setAttribute("aria-pressed",x.dataset.b===b));
+  openSheet(
+    `<h3>${esc(M.label)}</h3>
+     <div class="cap">Used in <b>${esc(where.join(", ")||"nothing right now")}</b>.
+       When you hit the top of the range on every round, move to the next lighter band and drop back to the bottom of the range.
+       <b>None</b> means strict reps.</div>
+     <div class="chips" id="bdchips">
+       ${BANDS.map(x=>`<button class="chip" data-b="${esc(x)}">${esc(x)}</button>`).join("")}
+     </div>
+     <div class="sheetbtns"><button id="bdno">Cancel</button><button id="bdyes" class="primary">Save band</button></div>`,
+    ()=>{
+      document.querySelectorAll("#bdchips .chip").forEach(x=>x.onclick=()=>{ b=x.dataset.b; draw(); });
+      $("bdno").onclick=closeSheet;
+      $("bdyes").onclick=()=>{
+        if(b!==bandOf(mv)) state.kitLog.push({t:Date.now(),date:today(),mv:mv,band:b});
+        state.band[mv]=b; closeSheet(); save(); render();
+      };
+      draw();
+    });
+}
+function openLoad(mv){
+  const M=MOVES[mv];
+  if(M.kind==="band"){ openBand(mv); return; }
+  let kg=kgOf(mv), pr=pairOf(mv);
+  const step=STEPS[M.kind]||1;
+  const where=whereUsed(mv);
+  const draw=()=>{
+    const unit=M.kind==="bw" ? (kg===0?"bodyweight":"kg added") : "kg";
+    const big =M.kind==="bw"&&kg===0 ? "BW" : (pr?"2 × "+kg:kg);
+    $("ldval").innerHTML=big+"<u>"+unit+"</u>";
+    document.querySelectorAll("#ldchips .chip").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.k===kg));
+    const pt=$("ldpair"); if(pt) pt.setAttribute("aria-pressed",pr);
+  };
+  openSheet(
+    `<h3>${esc(M.label)}</h3>
+     <div class="cap">Used in <b>${esc(where.join(", ")||"nothing right now")}</b>. Changing it here changes it everywhere that implement appears.</div>
+     <div class="stepper">
+       <button id="lddown" aria-label="Less">−</button>
+       <div class="val" id="ldval"></div>
+       <button id="ldup" aria-label="More">+</button>
+     </div>
+     <div class="chips" id="ldchips">
+       ${(PRESETS[M.kind]||[]).map(k=>`<button class="chip" data-k="${k}">${M.kind==="bw"&&k===0?"BW":k+"kg"}</button>`).join("")}
+     </div>
+     ${M.kind==="kb"?`<div class="chips"><button class="chip" id="ldpair">Two bells</button></div>`:""}
+     <div class="sheetbtns"><button id="ldno">Cancel</button><button id="ldyes" class="primary">Save load</button></div>`,
+    ()=>{
+      $("lddown").onclick=()=>{ kg=Math.max(0,Math.round((kg-step)*10)/10); draw(); };
+      $("ldup").onclick  =()=>{ kg=Math.round((kg+step)*10)/10; draw(); };
+      document.querySelectorAll("#ldchips .chip").forEach(b=>b.onclick=()=>{ kg=+b.dataset.k; draw(); });
+      const pt=$("ldpair"); if(pt) pt.onclick=()=>{ pr=!pr; draw(); };
+      $("ldno").onclick=closeSheet;
+      $("ldyes").onclick=()=>{
+        const changed=(kg!==kgOf(mv))||(pr!==pairOf(mv));
+        state.kg[mv]=kg; state.pair[mv]=pr;
+        if(changed) state.kitLog.push({t:Date.now(),date:today(),mv:mv,kg:kg,pair:pr});
+        closeSheet(); save(); render();
+      };
+      draw();
+    });
+}
+
+/* ---------- rep editor ---------- */
+function openReps(s,c,i){
+  const it=SESSIONS[s][c].items[i];
+  let rp=repOf(s,c,i);
+  const step=it.type?5:1;
+  const unit=it.type==="m"?"metres":(it.type==="sec"?"seconds":(it.side==="each"?"reps per side":"reps"));
+  const draw=()=>{ $("rpval").innerHTML=rp+"<u>"+unit+"</u>"; };
+  openSheet(
+    `<h3>${esc(it.nm)}</h3>
+     <div class="cap">Session ${SESSIONS[s].n}${SESSIONS[s][c].lab?", "+esc(SESSIONS[s][c].lab.toLowerCase()):(SESSIONS[s].B?", circuit "+c:"")}.
+       ${isBuild()
+         ? `${it.rng?"Range <b>"+esc(it.rng)+"</b>. ":""}Add reps until every round hits the top of the range, then go up a bell or a lighter band and drop back to the bottom.`
+         : "Reps are meant to hold still across a block — the usual time to raise them is when you restart at week 1."}</div>
+     <div class="stepper">
+       <button id="rpdown" aria-label="Fewer">−</button>
+       <div class="val" id="rpval"></div>
+       <button id="rpup" aria-label="More">+</button>
+     </div>
+     <div class="sheetbtns"><button id="rpno">Cancel</button><button id="rpyes" class="primary">Save reps</button></div>`,
+    ()=>{
+      $("rpdown").onclick=()=>{ rp=Math.max(1,rp-step); draw(); };
+      $("rpup").onclick  =()=>{ rp=rp+step; draw(); };
+      $("rpno").onclick=closeSheet;
+      $("rpyes").onclick=()=>{ state.reps[repKey(s,c,i)]=rp; closeSheet(); save(); render(); };
+      draw();
+    });
+}
+
+function openRest(){
+  let r=baseRest();
+  const draw=()=>{
+    $("rsval").innerHTML=r+"<u>seconds</u>";
+    document.querySelectorAll("#rschips .chip").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.r===r));
+  };
+  openSheet(
+    `<h3>Rest between rounds</h3>
+     <div class="cap">${isBuild()
+       ? "Cut it <b>90 → 75 → 60</b> once reps and load have both moved. When you reach 60, go back to adding reps."
+       : "Week 7 still takes a quarter off whatever you set here."}</div>
+     <div class="stepper">
+       <button id="rsdown" aria-label="Less">−</button>
+       <div class="val" id="rsval"></div>
+       <button id="rsup" aria-label="More">+</button>
+     </div>
+     <div class="chips" id="rschips">${[45,60,75,90,120].map(x=>`<button class="chip" data-r="${x}">${x}s</button>`).join("")}</div>
+     <div class="sheetbtns"><button id="rsno">Cancel</button><button id="rsyes" class="primary">Save rest</button></div>`,
+    ()=>{
+      $("rsdown").onclick=()=>{ r=Math.max(0,r-15); draw(); };
+      $("rsup").onclick  =()=>{ r=r+15; draw(); };
+      document.querySelectorAll("#rschips .chip").forEach(b=>b.onclick=()=>{ r=+b.dataset.r; draw(); });
+      $("rsno").onclick=closeSheet;
+      $("rsyes").onclick=()=>{ state.rest[restKey()]=r; closeSheet(); save(); render(); };
+      draw();
+    });
+}
+
+function openProg(){
+  openSheet(
+    `<h3>Programme</h3>
+     <div class="cap">Each programme keeps its own week, reps, progress and log. Loads on kit they share (swing bell, split-squat bells, machines) carry across.</div>
+     ${Object.values(PROGS).map(p=>`
+       <button class="kitrow" data-p="${p.id}"><span><b>${esc(p.name)}</b><span class="d" style="display:block;color:var(--chalk-dim);font-size:12px;margin-top:3px;line-height:1.45">${esc(p.desc)}</span></span>
+       <span class="v">${p.id===state.progId?"✓":""}</span></button>`).join("")}
+     <div class="sheetbtns"><button id="pgno">Close</button></div>`,
+    ()=>{
+      document.querySelectorAll("#sheet [data-p]").forEach(b=>b.onclick=()=>{ closeSheet(); switchProg(b.dataset.p); });
+      $("pgno").onclick=closeSheet;
+    });
+}
+function switchProg(id){
+  if(id===state.progId||!PROGS[id]) return;
+  endRest(); stopElapsed();
+  state.weekOf[state.progId]=state.week;
+  state.progId=id;
+  state.week=state.weekOf[id]||1;
+  SESSIONS=PR().sessions;
+  state.sIdx=0; state.circuit="A"; state.edit=false;
+  if(state.view!=="track") state.view="train";
+  save(); render();
+}
+
+function openStation(s,c,i){
+  const it=SESSIONS[s][c].items[i];
+  const rp=repOf(s,c,i);
+  openSheet(
+    `<h3>${esc(it.nm)}</h3>
+     <div class="cap">Now set to <b>${esc(kitLabel(it.mv))}</b> for <b>${rp} ${esc(subLabel(it,rp)||"reps")}</b>.</div>
+     <div class="sheetbtns">
+       <button id="stld" class="primary">Change load</button>
+       <button id="strp" class="primary">Change reps</button>
+     </div>
+     <div class="sheetbtns"><button id="stno">Close</button></div>`,
+    ()=>{
+      $("stld").onclick=()=>{ closeSheet(); openLoad(it.mv); };
+      $("strp").onclick=()=>{ closeSheet(); openReps(s,c,i); };
+      $("stno").onclick=closeSheet;
+    });
+}
+
+/* ---------- tally ---------- */
+function drawTally(n){
+  const svg=$("tally"); let out=""; let x=4;
+  const S='stroke="#EDE9E2" stroke-width="2.6" stroke-linecap="round"';
+  for(let g=0;g<Math.ceil(n/5);g++){
+    const inG=Math.min(5,n-g*5);
+    for(let i=0;i<Math.min(4,inG);i++)
+      out+=`<line x1="${x+i*8}" y1="5" x2="${x+i*8}" y2="29" ${S}/>`;
+    if(inG===5) out+=`<line x1="${x-4}" y1="28" x2="${x+27}" y2="6" ${S}/>`;
+    x+=48;
+  }
+  svg.innerHTML=out||`<text x="2" y="23" fill="#4A535F" font-size="12" font-family="ui-monospace,monospace" letter-spacing="2">NO ROUNDS YET</text>`;
+}
+
+/* ---------- commit a finished circuit ---------- */
+function commit(p){
+  const s=state.sIdx,c=state.circuit;
+  if(c==="F"){
+    const e={id:uid(),t:Date.now(),date:today(),week:state.week,sIdx:s,circuit:"F",prog:PR().id,
+             fin:true,rounds:0,secs:p.secs,reps:0,vol:0};
+    state.log.push(e); p.logged=true; p.logId=e.id; return;
+  }
+  const items=SESSIONS[s][c].items;
+  let reps=0,vol=0;
+  items.forEach((it,i)=>{
+    const rp=repOf(s,c,i);
+    reps+=repTotal(it,rp)*p.done;
+    vol +=repVol(it,rp,it.mv)*p.done;
+  });
+  const entry={
+    id:uid(), t:Date.now(), date:today(), week:state.week, sIdx:s, circuit:c, prog:PR().id,
+    rounds:p.done, secs:p.secs, reps:reps, vol:Math.round(vol)
+  };
+  state.log.push(entry);
+  p.logged=true; p.logId=entry.id;
+}
+
+/* ---------- chrome ---------- */
+function buildTabs(){
+  let h=SESSIONS.map((s,i)=>{
+    const sel=state.view==="train"&&i===state.sIdx;
+    const live=["A","B","C","F"].some(c=>{
+      const q=state.prog[pKey(state.week,i,c)];
+      return q&&(q.done>0||q.startedAt);
+    });
+    return `<button class="tab" role="tab" aria-selected="${sel}" data-i="${i}">
+      <span class="n">${s.n}</span>${esc(s.name)}${live?'<span class="dot"></span>':""}</button>`;
+  }).join("");
+  h+=`<button class="tab" role="tab" aria-selected="${state.view==="track"}" data-i="track">
+        <span class="n">▤</span>Track</button>`;
+  $("tabs").innerHTML=h;
+  $("tabs").querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
+    endRest();
+    if(b.dataset.i==="track"){ state.view="track"; state.edit=false; }
+    else{
+      state.view="train";
+      state.sIdx=+b.dataset.i;
+      fixCircuit();
+    }
+    save(); render();
+  });
+}
+function buildCircuits(){
+  if(state.view==="track"){ $("circuits").classList.add("hidden"); return; }
+  $("circuits").classList.remove("hidden");
+  const s=SESSIONS[state.sIdx];
+  const opts=[];
+  CKEYS.forEach(k=>{ if(s[k]) opts.push([k, s[k].lab || (k==="A"&&!s.B ? "The circuit" : "Circuit "+k)]); });
+  if(s.fin) opts.push(["F","Finisher"]);
+  $("circuits").innerHTML=opts.map(([k,l])=>{
+    const p=state.prog[pKey(state.week,state.sIdx,k)];
+    const mark=p&&p.logged?' <span class="tick">✓</span>'
+             :(p&&p.done>0?` <span class="tick">${p.done}</span>`
+             :(p&&p.startedAt?' <span class="tick">·</span>':""));
+    return `<button class="cbtn" role="tab" aria-selected="${state.circuit===k}" data-c="${k}">${l}${mark}</button>`;
+  }).join("")+`<button class="editbtn" id="edittog" aria-pressed="${state.edit}">Edit</button>`;
+  $("circuits").querySelectorAll(".cbtn").forEach(b=>b.onclick=()=>{
+    endRest(); state.circuit=b.dataset.c; save(); render();
+  });
+  $("edittog").onclick=()=>{ state.edit=!state.edit; save(); render(); };
+}
+
+function fixCircuit(){
+  const s=SESSIONS[state.sIdx];
+  if(state.circuit==="F"&&!s.fin) state.circuit="A";
+  if(state.circuit!=="F"&&!s[state.circuit]) state.circuit="A";
+}
+
+/* ---------- render ---------- */
+function render(){
+  buildTabs(); buildCircuits();
+  $("wknum").textContent=state.week;
+  $("progpill").textContent=PR().name+" ▾";
+  const editing=state.edit&&state.view==="train"&&state.circuit!=="F";
+  $("editnote").classList.toggle("hidden",!editing);
+  document.body.classList.toggle("editing",editing);
+
+  if(state.view==="track"){ renderTrack(); return; }
+  if(state.circuit==="F"){ renderFinisher(); return; }
+
+  $("bar").classList.remove("hidden");
+  $("roundpanel").classList.remove("hidden");
+
+  const s=state.sIdx,c=state.circuit,cir=current(),p=P(),R=rounds();
+  const amrap=!!cir.amrap;
+  const fin=isFin(p), started=!!p.startedAt;
+
+  $("rptop").classList.remove("hidden");
+  $("tally").classList.remove("hidden");
+  $("stations").className="stations"+(fin&&!editing?" sealedlist":"")+(!started&&!editing?" waiting":"");
+  $("stations").innerHTML=cir.items.map((it,i)=>{
+    const rp=repOf(s,c,i), sub=subLabel(it,rp);
+    return `<button class="st" data-i="${i}" data-done="${p.checks[i]?1:0}">
+       <span class="mark"></span>
+       <span class="nm">${esc(it.nm)}<span class="kit">${esc(kitLabel(it.mv))}${it.rng?" · aim "+esc(it.rng):""}</span></span>
+       <span class="rp">${rp}${sub?`<small>${esc(sub)}</small>`:""}</span>
+     </button>`;
+  }).join("");
+  $("stations").querySelectorAll(".st").forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.i;
+    if(state.edit){ openStation(s,c,i); return; }
+    if(fin||!p.startedAt) return;
+    p.checks[i]=!p.checks[i];
+    b.dataset.done=p.checks[i]?1:0;
+    if(!p.startedAt){ p.startedAt=Date.now(); startElapsed(); }
+    save();
+  });
+
+  const perRound=cir.items.reduce((a,it,i)=>a+repTotal(it,repOf(s,c,i)),0);
+  let note;
+  if(amrap){
+    const past=state.log.filter(e=>progOf(e)===PR().id&&e.sIdx===s&&e.circuit===c);
+    const best=past.reduce((m,e)=>Math.max(m,e.rounds||0),0);
+    const last=past.length?past[past.length-1].rounds:null;
+    note = started
+      ? `Keep moving. Tap <b>Round complete</b> each time you finish the list. The clock stops itself at ${fmt(cir.amrap)} and logs your rounds.`
+      : `Tap <b>Start the clock</b>. ${fmt(cir.amrap)} minutes, as many rounds as you can.`;
+    note += `<br>${perRound} reps a round.`+(last!=null?` Last time <b>${last} rounds</b>, best <b>${best}</b>. Beat it.`:"");
+  } else {
+    note = started
+      ? `Move straight from one station to the next. The rest is <b>between rounds only</b> — ${rest()} seconds${(!isBuild()&&state.week===7)?" (week 7 cut)":""}.`
+      : `Tap <b>Start circuit</b> to begin. That starts the clock and wakes up the tick boxes.`;
+    if(perRound) note += `<br>${perRound} reps a round, ${perRound*R} across ${R} rounds.`;
+  }
+  if(isBuild()&&state.week===6) note += `<br><b>Week 6 deload</b> — one round fewer everywhere. Keep the loads, leave some in the tank.`;
+  $("extra").innerHTML=`<div class="note">${note}</div>`+(cir.note?`<div class="note">${cir.note}</div>`:"");
+
+  $("rdone").textContent=p.done;
+  $("rtotal").textContent=amrap?" done":" / "+R;
+  $("restlab").textContent=amrap?"Time cap":"Rest between";
+  $("restval").textContent=amrap?fmt(cir.amrap):rest()+"s";
+  $("elapsedlab").textContent=amrap?"Time left":"Elapsed";
+  $("rprest").onclick=()=>{ if(state.edit&&!amrap) openRest(); };
+  drawTally(p.done);
+
+  $("elapsedbox").classList.remove("hidden");
+  if(started&&!fin) startElapsed(); else stopElapsed();
+  paintElapsed();
+
+  $("sealedbox").classList.toggle("hidden",!(started||p.done>0));
+  if(started||p.done>0){
+    const e=state.log.find(x=>x.id===p.logId);
+    $("sealedmsg").innerHTML = fin
+      ? (e ? `Logged ${esc(e.date)} — ${e.rounds} ${e.rounds===1?"round":"rounds"}, ${e.reps} reps${e.secs?" in "+fmt(e.secs):""}. Stations are locked.`
+           : `${p.done} rounds done. Stations are locked.`)
+      : (amrap ? `Running. ${p.done} ${p.done===1?"round":"rounds"} so far.` : `Running. ${p.done} of ${R} rounds done.`);
+    $("startagain").textContent=fin?"Start this circuit again":"Reset this circuit";
+  }
+  $("go").disabled=fin;
+  $("go").textContent=fin?(amrap?"AMRAP complete ✓":"Circuit complete ✓"):(started?"Round complete":(amrap?"Start the clock":"Start circuit"));
+}
+
+function renderFinisher(){
+  const p=P(), done=p.done>=1, started=!!p.startedAt;
+  $("stations").className="stations";
+  $("stations").innerHTML="";
+  $("bar").classList.remove("hidden");
+  $("roundpanel").classList.remove("hidden");
+  $("rptop").classList.add("hidden");
+  $("tally").classList.add("hidden");
+  $("elapsedbox").classList.remove("hidden");
+  if(started&&!done) startElapsed(); else stopElapsed();
+  paintElapsed();
+
+  $("sealedbox").classList.toggle("hidden",!(started||done));
+  if(started||done){
+    const e=state.log.find(x=>x.id===p.logId);
+    $("sealedmsg").innerHTML = done
+      ? `Logged ${esc(e?e.date:today())}${p.secs?" — "+fmt(p.secs):""}. Done for the day.`
+      : `Running.`;
+    $("startagain").textContent=done?"Do the finisher again":"Reset the finisher";
+  }
+  $("go").disabled=done;
+  $("go").textContent=done?"Finisher complete ✓":(started?"Finisher complete":"Start finisher");
+  $("extra").innerHTML=`<div class="note">${SESSIONS[state.sIdx].fin}</div>`;
+}
+
+/* ---------- tracker ---------- */
+function renderTrack(){
+  $("roundpanel").classList.add("hidden");
+  $("stations").className="stations";
+  $("stations").innerHTML="";
+  $("bar").classList.add("hidden");
+  stopElapsed();
+
+  const pid=PR().id;
+  const log=state.log.filter(e=>progOf(e)===pid).sort((a,b)=>a.t-b.t);
+  const byWeek={};
+  log.forEach(e=>{ byWeek[e.week]=(byWeek[e.week]||0)+(e.reps||0); });
+  const weeks=Object.keys(byWeek).map(Number).sort((a,b)=>a-b);
+  const thisWk=byWeek[state.week]||0, prevWk=byWeek[state.week-1]||0;
+  const totalReps=log.reduce((a,e)=>a+(e.reps||0),0);
+  const totalVol =log.reduce((a,e)=>a+(e.vol||0),0);
+
+  let h=`<div class="loads">`;
+
+  h+=`<h2>Where you are</h2>
+      <div class="stat">
+        <div><div class="k">Week ${state.week}<br>reps</div><div class="v">${thisWk.toLocaleString()}</div></div>
+        <div><div class="k">On week ${Math.max(1,state.week-1)}</div><div class="v">${prevWk?((thisWk-prevWk>=0?"+":"")+(thisWk-prevWk)):"—"}</div></div>
+        <div><div class="k">Circuits<br>logged</div><div class="v">${log.length}</div></div>
+      </div>`;
+
+  h+=`<h2>Reps a week<span class="sub">${isBuild()
+        ? "Every completed circuit added up. Reps climb first, then the load goes up, then the rest comes down."
+        : "Every completed circuit added up. Volume is the first lever in this block, so this should climb through week 6."}</span></h2>
+      ${barChart(weeks.map(w=>({lab:"wk "+w,v:byWeek[w]})))}`;
+
+  if(isBuild()){
+    const am=log.filter(e=>e.sIdx===3).slice(-10);
+    h+=`<h2>AMRAP — rounds in 20 minutes<span class="sub">Same clock, more rounds. Beat it every week.</span></h2>`;
+    h+= am.length
+      ? barChart(am.map(e=>({lab:"wk "+e.week,v:e.rounds})),true)
+      : `<div class="small">Nothing here yet. Run session 4 and your rounds write themselves when the clock stops.</div>`;
+  } else {
+    const s4=log.filter(e=>e.sIdx===3&&e.secs>0).slice(-10);
+    h+=`<h2>The 300 — time per session<span class="sub">Same work, less time. That's density, and it's the second lever.</span></h2>`;
+    h+= s4.length
+      ? barChart(s4.map(e=>({lab:"wk "+e.week,v:e.secs,fmt:fmt(e.secs)})),true)
+      : `<div class="small">Nothing here yet. Finish every round of session 4 and the time writes itself.</div>`;
+  }
+
+  const used=movesInProg();
+  h+=`<h2>Kit and loads<span class="sub">Tap anything to change it. A load belongs to the implement, so it updates every station that uses it.${isBuild()?" Bands live here too.":""}</span></h2>`;
+  h+=used.map(mv=>{
+    const M=MOVES[mv];
+    const moved = M.kind==="band"
+      ? (state.band[mv]!=null&&state.band[mv]!==M.band)
+      : (state.kg[mv]!=null&&state.kg[mv]!==M.kg);
+    const was = M.kind==="band" ? M.band.toLowerCase()+" band" : M.kg+"kg";
+    return `<button class="kitrow" data-mv="${mv}"><span>${esc(M.label)}</span>
+      <span class="v">${esc(kitLabel(mv))}${moved?"<em>changed from "+esc(was)+"</em>":""}</span></button>`;
+  }).join("");
+
+  const kl=state.kitLog.filter(k=>used.includes(k.mv));
+  if(kl.length){
+    h+=`<h2>Load changes</h2>`+
+      kl.slice().reverse().slice(0,30).map(k=>
+        `<div class="logrow"><span>${esc(MOVES[k.mv]?MOVES[k.mv].label:k.mv)}<span class="d">${esc(k.date)}</span></span>
+         <span class="t">${k.band!=null?esc(k.band==="None"?"strict":k.band.toLowerCase()+" band"):(k.pair?"2 × ":"")+k.kg+"kg"}</span></div>`).join("")+
+      `<button class="ghost warn" id="clearkit">Clear load history</button>`;
+  }
+
+  h+=`<h2>Reps per station<span class="sub">${isBuild()
+      ? "Work up through each range. At the top on every round, go heavier or lighter band and start at the bottom again."
+      : "Fixed across a block by design. Raise them when you restart at week 1."}</span></h2>`;
+  SESSIONS.forEach((s,si)=>CKEYS.forEach(c=>{
+    if(!s[c]) return;
+    h+=`<div class="grouplab">Session ${s.n} · ${s[c].lab?esc(s[c].lab.toLowerCase()):(s.B?"circuit "+c:"the circuit")}</div>`;
+    h+=s[c].items.map((it,i)=>{
+      const rp=repOf(si,c,i);
+      const moved=state.reps[repKey(si,c,i)]!=null&&state.reps[repKey(si,c,i)]!==it.rp;
+      return `<button class="kitrow" data-s="${si}" data-c="${c}" data-i="${i}"><span>${esc(it.nm)}</span>
+        <span class="v">${rp}<em>${esc(subLabel(it,rp)||"reps")}${moved?" · was "+it.rp:""}</em></span></button>`;
+    }).join("");
+  }));
+
+  h+=`<h2>The log<span class="sub">Written the moment a circuit's last round lands.</span></h2>`;
+  h+= log.length
+    ? log.slice().sort((a,b)=>b.t-a.t).map(e=>{
+        const S=SESSIONS[e.sIdx];
+        const nm=S?S.name:"Session "+(e.sIdx+1);
+        const cl=S&&S[e.circuit]&&S[e.circuit].lab ? " · "+S[e.circuit].lab.toLowerCase() : (S&&S.B?" "+e.circuit:"");
+        const bits=["wk "+e.week,e.date].concat(e.reps?[e.reps+" reps"]:[]).concat(e.vol?[e.vol.toLocaleString()+"kg moved"]:[]);
+        const head=e.fin||e.circuit==="F" ? `<b>${esc(nm)}</b> — finisher` : `<b>${esc(nm)}${esc(cl)}</b> — ${e.rounds} rounds`;
+        return `<div class="logrow">
+          <span>${head}
+            <span class="d">${esc(bits.join(" · "))}</span></span>
+          <span class="t">${e.secs?fmt(e.secs):"—"}<button class="del" data-del="${e.id}">Delete</button></span>
+        </div>`;
+      }).join("")
+    : `<div class="small">Empty. Finish a circuit and it writes itself here.</div>`;
+
+  h+=`<div class="small">${totalReps.toLocaleString()} reps and ${totalVol.toLocaleString()}kg logged so far.
+      Bodyweight work counts toward reps but not toward kilos moved, and carries and holds count toward neither.</div>`;
+  if(log.length) h+=`<button class="ghost warn" id="clearlog">Clear this programme's log</button>`;
+  h+=`<button class="ghost warn" id="resetall">Reset everything</button>`;
+  h+=`<div class="small">Saved on this phone only. Deleting the app from the home screen deletes the log with it.</div></div>`;
+
+  $("extra").innerHTML=h;
+
+  $("extra").querySelectorAll(".kitrow[data-mv]").forEach(b=>b.onclick=()=>openLoad(b.dataset.mv));
+  $("extra").querySelectorAll(".kitrow[data-s]").forEach(b=>b.onclick=()=>openReps(+b.dataset.s,b.dataset.c,+b.dataset.i));
+  $("extra").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{
+    const id=b.dataset.del, e=state.log.find(x=>x.id===id); if(!e) return;
+    const S=SESSIONS[e.sIdx], nm=S?S.name:"that session";
+    ask("Delete this entry?",
+      `<b>${esc(nm)}, week ${e.week}, ${esc(e.date)}</b> — ${e.rounds} rounds${e.reps?", "+e.reps+" reps":""}. It comes out of every total on this screen and there's no undo.`,
+      "Delete it",()=>{
+        state.log=state.log.filter(x=>x.id!==id);
+        Object.keys(state.prog).forEach(k=>{ const p=state.prog[k]; if(p.logId===id){ p.logged=false; p.logId=null; } });
+        save(); render();
+      },true);
+  });
+
+  const ck=$("clearkit");
+  if(ck) ck.onclick=()=>ask("Clear load history?",
+    "The record of what you changed and when goes. Your current loads stay exactly as they are.",
+    "Clear history",()=>{ state.kitLog=[]; save(); render(); },true);
+
+  const cl=$("clearlog");
+  if(cl) cl.onclick=()=>ask("Clear this programme's log?",
+    `All <b>${log.length}</b> logged ${esc(PR().name)} circuits and every total on this screen. The other programme's log, your loads and reps stay put. Nothing here is backed up anywhere else.`,
+    "Clear the log",()=>{
+      const gone=new Set(log.map(e=>e.id));
+      state.log=state.log.filter(e=>!gone.has(e.id));
+      Object.keys(state.prog).forEach(k=>{ if(gone.has(state.prog[k].logId)){ state.prog[k].logged=false; state.prog[k].logId=null; } });
+      save(); render();
+    },true);
+
+  $("resetall").onclick=()=>ask("Reset everything?",
+    "Both programmes' logs, every load and band you've changed, every rep and rest you've adjusted, and all rounds in progress. Back to a clean week 1.",
+    "Wipe it all",()=>{
+      state={week:1,sIdx:0,circuit:"A",view:"track",edit:false,progId:state.progId,
+             kg:{},pair:{},reps:{},band:{},rest:{},weekOf:{},prog:{},log:[],kitLog:[]};
+      save(); render();
+    },true);
+}
+
+function barChart(rows,isTime){
+  if(!rows.length) return `<div class="small">Nothing to draw yet.</div>`;
+  const W=320,H=136,pad=16;
+  const gap=(W-pad*2)/rows.length;
+  const bw=Math.max(8,Math.min(36,gap-8));
+  const max=Math.max.apply(null,rows.map(r=>r.v))||1;
+  let out=`<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">`;
+  out+=`<line x1="${pad-4}" y1="${H-22}" x2="${W-pad+4}" y2="${H-22}" stroke="#333C48" stroke-width="1"/>`;
+  rows.forEach((r,i)=>{
+    const hh=Math.max(2,(r.v/max)*(H-54));
+    const x=pad+i*gap+(gap-bw)/2, y=H-22-hh;
+    out+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${hh.toFixed(1)}" rx="2" fill="${isTime?"#B8A283":"#C4571F"}"/>`;
+    out+=`<text x="${(x+bw/2).toFixed(1)}" y="${(y-6).toFixed(1)}" fill="#8D95A0" font-size="9" font-family="ui-monospace,monospace" text-anchor="middle">${esc(r.fmt||r.v)}</text>`;
+    out+=`<text x="${(x+bw/2).toFixed(1)}" y="${H-7}" fill="#8D95A0" font-size="9" font-family="ui-monospace,monospace" text-anchor="middle">${esc(r.lab)}</text>`;
+  });
+  return out+`</svg>`;
+}
+
+/* ---------- elapsed clock ---------- */
+function paintElapsed(){
+  if(state.view!=="train") return;
+  const p=P();
+  if(isAmrap()){
+    const cap=current().amrap;
+    if(p.secs>0){ $("elapsedval").textContent="0:00"; return; }
+    if(!p.startedAt){ $("elapsedval").textContent=fmt(cap); return; }
+    const left=cap-(Date.now()-p.startedAt)/1000;
+    $("elapsedval").textContent=fmt(Math.ceil(left));
+    if(left<=0) setTimeout(finishAmrap,0);   // after the current render finishes
+    return;
+  }
+  if(isFin(p)&&p.secs){ $("elapsedval").textContent=fmt(p.secs); return; }
+  if(!p.startedAt){ $("elapsedval").textContent="0:00"; return; }
+  $("elapsedval").textContent=fmt((Date.now()-p.startedAt)/1000);
+}
+function finishAmrap(){
+  const p=P(); if(p.secs>0) return;
+  p.secs=current().amrap;
+  p.checks=p.checks.map(()=>false);
+  stopElapsed(); unlock(); beep();
+  commit(p); save(); render();
+}
+function startElapsed(){ if(tickId) return; tickId=setInterval(paintElapsed,1000); }
+function stopElapsed(){ if(tickId){ clearInterval(tickId); tickId=null; } }
+
+/* ---------- rest timer ---------- */
+async function lock(){ try{ if("wakeLock" in navigator) wakeLock=await navigator.wakeLock.request("screen"); }catch(e){} }
+function unlock(){ try{ wakeLock&&wakeLock.release(); wakeLock=null; }catch(e){} }
+function beep(){
+  try{
+    const a=new (window.AudioContext||window.webkitAudioContext)();
+    const o=a.createOscillator(),g=a.createGain();
+    o.connect(g);g.connect(a.destination);
+    o.frequency.value=660;o.type="square";
+    g.gain.setValueAtTime(.22,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.45);
+    o.start();o.stop(a.currentTime+.45);
+  }catch(e){}
+}
+function startRest(){
+  const total=rest(); if(!total) return;
+  const endAt=Date.now()+total*1000;
+  $("go").classList.add("hidden"); $("timerbox").classList.remove("hidden");
+  const paint=()=>{
+    const left=Math.max(0,Math.round((endAt-Date.now())/1000));
+    $("tval").textContent=fmt(left);
+    if(left<=0){ beep(); endRest(); }
+  };
+  paint(); lock();
+  timerId=setInterval(paint,250);
+}
+function endRest(){
+  if(timerId){ clearInterval(timerId); timerId=null; }
+  unlock();
+  $("timerbox").classList.add("hidden"); $("go").classList.remove("hidden");
+}
+
+/* ---------- actions ---------- */
+$("go").onclick=()=>{
+  if(state.view!=="train") return;
+  const p=P();
+
+  // first tap on any circuit just starts the clock
+  if(!p.startedAt){
+    p.startedAt=Date.now(); startElapsed();
+    if(isAmrap()) lock();   // keep the screen awake for the whole 20 minutes
+    save(); render(); return;
+  }
+
+  if(isAmrap()){
+    if(p.secs>0) return;
+    p.done++; p.checks=p.checks.map(()=>false);
+    save(); render(); return;
+  }
+
+  if(state.circuit==="F"){
+    if(p.done>=1) return;
+    p.done=1;
+    p.secs=Math.floor((Date.now()-p.startedAt)/1000);
+    stopElapsed(); commit(p); save(); render();
+    return;
+  }
+
+  const R=rounds();
+  if(p.done>=R) return;
+  p.done++;
+  p.checks=p.checks.map(()=>false);
+  if(p.done>=R){
+    p.secs=Math.floor((Date.now()-p.startedAt)/1000);
+    stopElapsed();
+    commit(p);
+  }
+  save(); render();
+  if(p.done<R) startRest();
+};
+$("skip").onclick=endRest;
+
+$("startagain").onclick=()=>{
+  const p=P(), isF=state.circuit==="F";
+  const what=isF?"finisher":"circuit";
+  const body=p.logged
+    ? `That ${what} is already in the log and the entry stays. This clears the board so you can run it again from zero, and the clock restarts.`
+    : (isF
+        ? `The clock has been running and nothing has been logged. Resetting loses the time.`
+        : `<b>${p.done} ${p.done===1?"round is":"rounds are"}</b> on the board and haven't been logged. Clearing them loses that work for good.`);
+  ask(p.logged?"Run it again?":"Reset to zero?",body,"Clear the board",()=>{
+    p.done=0; p.checks=p.checks.map(()=>false);
+    p.startedAt=null; p.secs=0; p.logged=false; p.logId=null;
+    endRest(); save(); render();
+  },true);
+};
+
+function changeWeek(d){
+  const w=state.week+d;
+  if(w<1||w>PR().weeks) return;
+  endRest(); stopElapsed();
+  state.week=w; save(); render();
+}
+$("wkup").onclick=()=>changeWeek(1);
+$("wkdown").onclick=()=>changeWeek(-1);
+$("scrim").onclick=closeSheet;
+$("progpill").onclick=openProg;
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden) paintElapsed(); });
+
+load();
+// First launch after the Build block was added: park the original block's week and open Build.
+if(!PROGS[state.progId]) state.progId=null;
+if(!state.progId){
+  state.weekOf.rounds=state.week;
+  state.progId="build"; state.week=1; state.sIdx=0; state.circuit="A";
+}
+SESSIONS=PR().sessions;
+state.edit=false;
+if(state.view!=="track") state.view="train";
+if(state.sIdx<0||state.sIdx>3) state.sIdx=0;
+if(state.week<1||state.week>PR().weeks) state.week=1;
+fixCircuit();
+render();
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+</script>
+</body>
+</html>
